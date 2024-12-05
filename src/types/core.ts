@@ -21,7 +21,7 @@ export interface Provider {
  * We have these mappings:
  * --xx->yx->yy->null--
  */
-export type Mapping = "xx" | "xy" | "yx" | "yy" | null;
+export type Mapping = 'xx' | 'xy' | 'yx' | 'yy' | null;
 
 /**
  * A link is a piece in the arbitrategy chain, containing provider, market id
