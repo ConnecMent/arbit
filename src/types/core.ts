@@ -10,23 +10,24 @@ export interface AmountWithDecimal {
 export interface Provider {
   x2y(marketId: string, amount: AmountWithDecimal): Promise<AmountWithDecimal>;
   y2x(marketId: string, amount: AmountWithDecimal): Promise<AmountWithDecimal>;
+  getX(marketId: string): Promise<string>;
+  getY(marketId: string): Promise<string>;
+  asset2usd(assetId: string, amount: AmountWithDecimal): Promise<number>;
+  usd2asset(assetId: string, usd: number): Promise<AmountWithDecimal>;
 }
 
 /**
- * Mapping type of a market to the next one in an arbitrategy chain:
- * - xx: token X of this market is token X of the next market
- * - xy: token X of this market is token Y of the next market
- * - yx: token Y of this market is token X of the next market
- * - yy: token Y of this market is token Y of the next market
- * - null: used for the last market, indicating chain tail
+ * To link all markets in a arbitrategy chain we use swap type:
+ * - x2y: sell token X and buy token Y in this market
+ * - y2x: sell token Y and buy token X in this market
  *
  * @example
  * For this chain:
  * --ETH/BTC->ETH/USDT->USDT/USDC->BTC/USDC--
- * We have these mappings:
- * --xx->yx->yy->null--
+ * We have these swaps:
+ * --y2x->x2y->x2y->y2x
  */
-export type Mapping = "xx" | "xy" | "yx" | "yy" | null;
+export type SwapType = "x2y" | "y2x";
 
 /**
  * A link is a piece in the arbitrategy chain, containing provider, market id
@@ -42,7 +43,7 @@ export type Mapping = "xx" | "xy" | "yx" | "yy" | null;
 export interface Link {
   providerId: string;
   marketId: string;
-  mapping: Mapping;
+  swapType: SwapType;
 }
 
 /**
@@ -55,3 +56,31 @@ export type ArbitrategyChain = Link[];
  * Arbitrategy indicates a set of chains that we are going to manipulate
  */
 export type Arbitrategy = ArbitrategyChain[];
+
+/**
+ * A single trade on a link (within an arbitrategy chain)
+ */
+export interface TradeLink extends Link {
+  input: AmountWithDecimal;
+  output: AmountWithDecimal;
+}
+
+/**
+ * A sequence of trades executed within a single arbitrategy chain
+ * Each trade in the path contributes to the overall profit calculation
+ */
+export type TradePath = TradeLink[];
+
+export interface Profit {
+  usd: number;
+  percent: number;
+}
+
+/**
+ * The final result of arbitrategy execution, including full trading history and
+ * final profit
+ */
+export interface ArbitResult {
+  tradePath: TradePath;
+  profit: Profit;
+}
